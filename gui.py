@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import  ttk
 from tkinter.messagebox import showerror, showwarning, showinfo
 from tkinter.constants import BOTTOM, CENTER, LEFT, RIGHT, TOP, TRUE
-# from tkinter.filedialog import askopenfilename, asksaveasfilename
-# from typing import Text
 from scanner.ecia import Scanner
 
 board_eui={}

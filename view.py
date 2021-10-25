@@ -2,22 +2,16 @@ import tkinter as tk
 from tkinter import  ttk
 from tkinter.messagebox import showerror, showwarning, showinfo
 from tkinter.constants import BOTTOM, CENTER, LEFT, RIGHT, TOP, TRUE
-# from tkinter.filedialog import askopenfilename, asksaveasfilename
-# from typing import Text
 from scanner.ecia import Scanner
 
-board_eui={}
-gui_scanner={}
 
-
-class View(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        main_window = tk.Tk()
-        is_auto_scan = tk.BooleanVar()
-        main_window.title("Definium Prodution Test Tool")
-        main_window.geometry('1200x800+50+50')
-        main_frame = tk.Frame(main_window)
+class View(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+       
+        self.is_auto_scan = tk.BooleanVar()
+        self.scanner=''
+        main_frame = tk.Frame(parent)
         main_frame.pack()
 
         frame_1_top=tk.LabelFrame(main_frame,text="TEST")
@@ -44,28 +38,43 @@ class View(tk.Tk):
         frame_2_col1.rowconfigure([0,1,2,3,4], minsize=10, weight=1)
         frame_2_col1.columnconfigure(0, minsize=100, weight=1)
 
-        btn_test = tk.Button(frame_2_col1, text="Start Test", fg="blue",font=10, command=btn_start_handler)
+        btn_test = tk.Button(frame_2_col1, text="Start Test", fg="blue",font=10, command=self.btn_start_handler)
         btn_test.grid(row=0, column=0, columnspan=2, sticky="nsew", ipadx=20, ipady=20)
 
-        radio_scan=tk.Radiobutton(frame_2_col1, text="scan", variable=is_auto_scan, value=True,
-                        command=sel)
+        radio_scan=tk.Radiobutton(frame_2_col1, text="scan", variable=self.is_auto_scan, value=True,
+                        command=self.sel)
         radio_scan.grid(row=1, column=0,  sticky="w", padx=5, pady=5)
-        radio_mannul=tk.Radiobutton(frame_2_col1, text="manual", variable=is_auto_scan, value=False,
-                        command=sel)
+        radio_mannul=tk.Radiobutton(frame_2_col1, text="manual", variable=self.is_auto_scan, value=False,
+                        command=self.sel)
         radio_mannul.grid(row=1, column=1,  sticky="w", padx=5, pady=5)
 
         eui_label = ttk.Label(frame_2_col1, text="board eui:")
         eui_label.grid(row=2, column=0,  sticky="w", padx=5, pady=5)
-        eui_entry = ttk.Entry(frame_2_col1)
-        eui_entry.grid(row=2, column=1,  sticky="w", padx=5, pady=5)
+        self.eui_entry = ttk.Entry(frame_2_col1)
+        self.eui_entry.grid(row=2, column=1,  sticky="w", padx=5, pady=5)
 
         ##frame_2_col2   board_info
-        ele_list=['board eui','board type','board rev','project','batch']
-        generate_labels_with_lableframe(frame_2_col2,"INFO.",ele_list)
+        ele_list=['board eui','board type','board rev']
+        self.board_eui = tk.StringVar()
+        self.type = tk.StringVar()
+        self.rev = tk.StringVar()
+        var_list=[self.board_eui,self.type,self.rev]
+        row_index=list(range(0,len(ele_list)))
+        labelframe = tk.LabelFrame(frame_2_col2, text="INFO.")
+        labelframe.pack(fill="both", expand="yes")
+        labelframe.rowconfigure(row_index, minsize=10, weight=1)
+        labelframe.columnconfigure([0,1], minsize=100, weight=1)
+        
+        for idx in row_index:
+            board_eui_label = tk.Label(labelframe, text=ele_list[idx]+':')
+            board_eui_label.grid(row=idx, column=0,  sticky="w", padx=5, pady=5)
+            board_eui_data = tk.Label(labelframe,textvariable=var_list[idx])
+            board_eui_data.grid(row=idx, column=1,  sticky="w", padx=5, pady=5)
+       # self.generate_labels_with_lableframe(frame_2_col2,"INFO.",ele_list)
 
         ##frame_2_col3   test detail
         ele_list=['modem test','gps test','flash test','battery test','solar test']
-        generate_labels_with_lableframe(frame_2_col3,"DETAIL",ele_list)
+        self.generate_labels_with_lableframe(frame_2_col3,"DETAIL",ele_list)
 
         ##frame_2_col4   test result
         labelframe = tk.LabelFrame(frame_2_col4, text="RESULT")
@@ -91,69 +100,68 @@ class View(tk.Tk):
         frame_2_col3=tk.Frame(frame_1_bottom,padx=10, pady=10)
         frame_2_col3.pack(side=RIGHT)
 
-        btn_provision = tk.Button(frame_2_col1, text="Provision",fg="blue",font=10, command=btn_provision_handler)
+        btn_provision = tk.Button(frame_2_col1, text="Provision",fg="blue",font=10, command=self.btn_provision_handler)
         btn_provision.pack(ipadx=20, ipady=20)
 
         ele_list=['thing name','node type']
-        generate_labels_with_lableframe(frame_2_col2,"AWS Info",ele_list)
+        self.generate_labels_with_lableframe(frame_2_col2,"AWS Info",ele_list)
 
         labelframe = tk.LabelFrame(frame_2_col3, text="RESULT")
         labelframe.pack(fill="both", expand="yes",ipadx=20,ipady=20)
         result_label = tk.Label(labelframe, text="PASS",relief="ridge",fg="red",anchor=CENTER)
         result_label.pack(ipadx=40,ipady=40)
 
-        main_window.mainloop()
+    def set_controller(self, controller):
+        self.controller = controller
 
-
-
-def btn_start_handler():
-    if not is_auto_scan.get():
-        if not eui_entry.get().startswith("98") or len(eui_entry.get())!=16:
-            msg="please type valid eui, 16 digitals"
-            #print("msg")
-            showwarning(title='Warning',message=msg)
-        else:
-            board_eui=eui_entry.get() 
-            #print(board_eui)
-    else:
-        global gui_scanner
-        if not gui_scanner:
-            try:
-                gui_scanner = Scanner()
-            except: #Exception Scanner use exit(0)
-                msg="Can't find Scanner, please have a check and another try"
+    def btn_start_handler(self):
+        if not self.is_auto_scan.get():
+            if not self.eui_entry.get().startswith("98") or len(self.eui_entry.get())!=16:
+                msg="please type valid eui, 16 digitals"
                 #print("msg")
                 showwarning(title='Warning',message=msg)
-                return
+            else:
+                self.controller.model.set_board_info(self.eui_entry.get(),"eui")
+                self.board_eui.set(self.controller.model.get_board_info("eui"))
+                
+        else:
+            if not self.scanner:
+                try:
+                    self.scanner = Scanner()
+                except: #Exception Scanner use exit(0)
+                    msg="Can't find Scanner, please have a check and another try"
+                    #print("msg")
+                    showwarning(title='Warning',message=msg)
+                    return
 
-        gui_scanner.drain()
-        print("Please scan device barcode(plug in battery and switch on the board)")
-        bc = gui_scanner.scan()
-        if "S" not in bc:
-            msg="Could not decode barcode"
-            #print(msg)
-            showwarning(title='Warning',message=msg)
-        board_eui = bc["S"]
+            self.scanner.drain()
+            print("Please scan device barcode(plug in battery and switch on the board)")
+            bc = self.scanner.scan()
+            if "S" not in bc:
+                msg="Could not decode barcode"
+                #print(msg)
+                showwarning(title='Warning',message=msg)
+            self.controller.model.set_board_info(bc["S"],"eui")    
 
-def btn_provision_handler():
-    pass
+    def btn_provision_handler(self):
+        pass
 
-def sel():
-    if is_auto_scan.get():
-        print("Scanner Mode") 
-    else:    
-        print("Mannual Mode") 
-  
-def generate_labels_with_lableframe(master_frame,framename, elements_list):
-    row_index=list(range(0,len(elements_list)))
-    labelframe = tk.LabelFrame(master_frame, text=framename)
-    labelframe.pack(fill="both", expand="yes")
-    labelframe.rowconfigure(row_index, minsize=10, weight=1)
-    labelframe.columnconfigure([0,1], minsize=100, weight=1)
+    def sel(self):
+        if self.is_auto_scan.get():
+            print("Scanner Mode") 
+        else:    
+            print("Mannual Mode") 
     
-    for idx in row_index:
-        board_eui_label = tk.Label(labelframe, text=elements_list[idx]+':')
-        board_eui_label.grid(row=idx, column=0,  sticky="w", padx=5, pady=5)
-        board_eui_data = tk.Label(labelframe, text="placeholder..")
-        board_eui_data.grid(row=idx, column=1,  sticky="w", padx=5, pady=5)
+    def generate_labels_with_lableframe(self,master_frame,framename, elements_list):
+        row_index=list(range(0,len(elements_list)))
+        labelframe = tk.LabelFrame(master_frame, text=framename)
+        labelframe.pack(fill="both", expand="yes")
+        labelframe.rowconfigure(row_index, minsize=10, weight=1)
+        labelframe.columnconfigure([0,1], minsize=100, weight=1)
+        
+        for idx in row_index:
+            board_eui_label = tk.Label(labelframe, text=elements_list[idx]+':')
+            board_eui_label.grid(row=idx, column=0,  sticky="w", padx=5, pady=5)
+            board_eui_data = tk.Label(labelframe, text="placeholder..")
+            board_eui_data.grid(row=idx, column=1,  sticky="w", padx=5, pady=5)
 
