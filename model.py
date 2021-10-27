@@ -1,5 +1,8 @@
 
 
+from tkinter.constants import NONE
+
+
 class Model:
 
     def __init__(self,eui) -> None:
@@ -10,19 +13,19 @@ class Model:
         self.test_debug=''
         self.provsion_result=''
 
-
-    def get_board_info(self,key=''):
-        if key=='':
+    #view call this to update view
+    def get_board_info(self, key=NONE):
+        if key==NONE:
             return self.board_info
         return self.board_info[key]
         
-    def get_test_detail(self,key=''):
-        if key=='':
+    def get_test_detail(self,key=NONE):
+        if key==NONE:
             return self.test_detail
         return self.test_detail[key] 
 
     def get_aws_info(self,key):
-        if key=='':
+        if key==NONE:
             return self.aws_info
         return self.aws_info[key] 
 
@@ -35,23 +38,24 @@ class Model:
     def get_provsion_result(self):
         return self.provsion_result   
     
-    def set_board_info(self,info,key=''):
-        if key=='':
+    #connect db, update this
+    def set_board_info(self,info,key=NONE):
+        if key==NONE:
             self.board_info=info
         else:    
-            self.board_info[key]={key:info}
+            self.board_info[key]=info
         
-    def set_test_detail(self,info,key=''):
-        if key=='':
+    def set_test_detail(self,info,key=NONE):
+        if key==NONE:
             self.test_detail=info
         else:    
-            self.test_detail[key]={key:info}
+            self.test_detail[key]=info
                   
-    def set_aws_info(self,info,key=''):
-        if key=='':
+    def set_aws_info(self,info,key=NONE):
+        if key==NONE:
             self.aws_info=info
         else:    
-            self.aws_info[key]={key:info} 
+            self.aws_info[key]=info 
 
     def set_test_result(self,test_result):
         self.test_result=test_result

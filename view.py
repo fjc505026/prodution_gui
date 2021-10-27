@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import  ttk
+from tkinter import  Text, Tk, ttk
 from tkinter.messagebox import showerror, showwarning, showinfo
 from tkinter.constants import BOTTOM, CENTER, LEFT, RIGHT, TOP, TRUE
 from scanner.ecia import Scanner
@@ -8,9 +8,13 @@ from scanner.ecia import Scanner
 class View(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-       
         self.is_auto_scan = tk.BooleanVar()
         self.scanner=''
+
+        self.info_frame_vars=[]
+        self.detail_frame_vars=[]
+        self.aws_frame_vars=[]
+
         main_frame = tk.Frame(parent)
         main_frame.pack()
 
@@ -54,33 +58,24 @@ class View(ttk.Frame):
         self.eui_entry.grid(row=2, column=1,  sticky="w", padx=5, pady=5)
 
         ##frame_2_col2   board_info
-        ele_list=['board eui','board type','board rev']
-        self.board_eui = tk.StringVar()
-        self.type = tk.StringVar()
-        self.rev = tk.StringVar()
-        var_list=[self.board_eui,self.type,self.rev]
-        row_index=list(range(0,len(ele_list)))
-        labelframe = tk.LabelFrame(frame_2_col2, text="INFO.")
-        labelframe.pack(fill="both", expand="yes")
-        labelframe.rowconfigure(row_index, minsize=10, weight=1)
-        labelframe.columnconfigure([0,1], minsize=100, weight=1)
+        key_list=[]
+        value_list=[]  #not used
+        self.board_info={'board eui':'','board type':'DT1119','board Rev':'A','project':'Viotel','batch':'256'}
+        for key,value in self.board_info.items():
+            key_list.append(key)
+            value_list.append(value)
         
-        for idx in row_index:
-            board_eui_label = tk.Label(labelframe, text=ele_list[idx]+':')
-            board_eui_label.grid(row=idx, column=0,  sticky="w", padx=5, pady=5)
-            board_eui_data = tk.Label(labelframe,textvariable=var_list[idx])
-            board_eui_data.grid(row=idx, column=1,  sticky="w", padx=5, pady=5)
-       # self.generate_labels_with_lableframe(frame_2_col2,"INFO.",ele_list)
+        self.generate_labels_with_lableframe(frame_2_col2,"INFO.", key_list, self.info_frame_vars)
 
         ##frame_2_col3   test detail
         ele_list=['modem test','gps test','flash test','battery test','solar test']
-        self.generate_labels_with_lableframe(frame_2_col3,"DETAIL",ele_list)
+        self.generate_labels_with_lableframe(frame_2_col3,"DETAIL",ele_list,self.detail_frame_vars)
 
         ##frame_2_col4   test result
         labelframe = tk.LabelFrame(frame_2_col4, text="RESULT")
         labelframe.pack(fill="both", expand="yes",ipadx=20,ipady=20)
-        result_label = tk.Label(labelframe, text="PASS",relief="ridge",fg="red",anchor=CENTER)
-        result_label.pack(ipadx=40,ipady=40)
+        self.test_result_label = tk.Label(labelframe, relief="ridge",font=('bold', 20), anchor=CENTER)
+        self.test_result_label.pack(ipadx=40,ipady=40)
 
         #frame_1_middle stuff
         frame_1_middle.rowconfigure(0, weight=1)
@@ -104,12 +99,12 @@ class View(ttk.Frame):
         btn_provision.pack(ipadx=20, ipady=20)
 
         ele_list=['thing name','node type']
-        self.generate_labels_with_lableframe(frame_2_col2,"AWS Info",ele_list)
+        self.generate_labels_with_lableframe(frame_2_col2,"AWS Info",ele_list,self.aws_frame_vars)
 
         labelframe = tk.LabelFrame(frame_2_col3, text="RESULT")
         labelframe.pack(fill="both", expand="yes",ipadx=20,ipady=20)
-        result_label = tk.Label(labelframe, text="PASS",relief="ridge",fg="red",anchor=CENTER)
-        result_label.pack(ipadx=40,ipady=40)
+        self.provision_result_label = tk.Label(labelframe,relief="ridge",font=('bold', 20),anchor=CENTER)
+        self.provision_result_label.pack(ipadx=40,ipady=40)
 
     def set_controller(self, controller):
         self.controller = controller
@@ -121,9 +116,18 @@ class View(ttk.Frame):
                 #print("msg")
                 showwarning(title='Warning',message=msg)
             else:
-                self.controller.model.set_board_info(self.eui_entry.get(),"eui")
-                self.board_eui.set(self.controller.model.get_board_info("eui"))
-                
+                self.controller.model.set_board_info(self.eui_entry.get(), 'eui')
+                print(self.controller.model.get_board_info('eui'))
+                key_list=[]
+                value_list=[]
+                tmp={'board eui':self.controller.model.get_board_info('eui'),'board type':'DT1118','board Rev':'B','project':'Viotel','batch':'256'}
+                for key,value in tmp.items():
+                    key_list.append(key)
+                    value_list.append(value)
+
+                self.update_labels_in_lableframe(self.info_frame_vars,value_list)
+                self.update_test_result_label("PASS")
+        
         else:
             if not self.scanner:
                 try:
@@ -145,6 +149,7 @@ class View(ttk.Frame):
 
     def btn_provision_handler(self):
         pass
+        #... self.update_labels_in_lableframe(self.aws_frame_vars,value_list)
 
     def sel(self):
         if self.is_auto_scan.get():
@@ -152,16 +157,38 @@ class View(ttk.Frame):
         else:    
             print("Mannual Mode") 
     
-    def generate_labels_with_lableframe(self,master_frame,framename, elements_list):
-        row_index=list(range(0,len(elements_list)))
+    def generate_labels_with_lableframe(self,master_frame,framename, key_list, vars_list):
+        row_index=list(range(0,len(key_list)))
         labelframe = tk.LabelFrame(master_frame, text=framename)
         labelframe.pack(fill="both", expand="yes")
         labelframe.rowconfigure(row_index, minsize=10, weight=1)
         labelframe.columnconfigure([0,1], minsize=100, weight=1)
         
         for idx in row_index:
-            board_eui_label = tk.Label(labelframe, text=elements_list[idx]+':')
+            board_eui_label = tk.Label(labelframe, text=key_list[idx]+':')
             board_eui_label.grid(row=idx, column=0,  sticky="w", padx=5, pady=5)
-            board_eui_data = tk.Label(labelframe, text="placeholder..")
+            vars_list.append(tk.StringVar())
+            board_eui_data = tk.Label(labelframe, textvariable=vars_list[idx])
             board_eui_data.grid(row=idx, column=1,  sticky="w", padx=5, pady=5)
+           
+    def update_labels_in_lableframe(self,var_list,val_list):
+        row_index=list(range(0,len(var_list)))
+        for idx in row_index:
+            var_list[idx].set(val_list[idx])
+
+
+    def update_test_result_label(self, result):
+        if result == 'PASS':
+            self.test_result_label.config(text="PASS",fg="green")
+        else:
+            self.test_result_label.config(text="FAIL",fg="red") 
+
+
+    def update_provision_result_label(self,result):
+        if result == 'PASS':
+            self.provision_result_label.config(text="PASS",fg="green")
+        else:
+            self.provision_result_label.config(text="FAIL",fg="red")       
+
+    
 
