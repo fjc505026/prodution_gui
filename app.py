@@ -7,7 +7,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Definium Prodution Test Tool")
-        self.geometry('1200x800+50+50')
+        self.geometry('1200x1000+50+50')
         # create a model
         self.model = Model('')
         # create a view and place it on the root window

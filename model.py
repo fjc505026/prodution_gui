@@ -12,6 +12,8 @@ class Model:
         self.test_result=''
         self.test_debug=''
         self.provsion_result=''
+        self.debug_port=''
+        self.uart_test_port=''
 
     #view call this to update view
     def get_board_info(self, key=NONE):
@@ -34,6 +36,12 @@ class Model:
 
     def get_test_debug(self):
         return self.test_debug 
+
+    def get_debug_port(self):
+        return self.debug_port  
+
+    def get_uart_test_port(self):
+        return self.uart_test_port  
 
     def get_provsion_result(self):
         return self.provsion_result   
@@ -63,7 +71,13 @@ class Model:
     def set__test_debug(self,test_debug):
         self.test_debug=test_debug        
 
-    def get_provsion_result(self,provsion_result):
-        self.provsion_result=provsion_result  
+    def set_provsion_result(self,provsion_result):
+        self.provsion_result=provsion_result
+
+    def set_debug_port(self,port):
+        self.debug_port=port  
+
+    def get_uart_test_port(self,port):
+        self.uart_test_port=port       
 
 

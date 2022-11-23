@@ -25,7 +25,10 @@ class View(ttk.Frame):
         frame_1_middle.pack(fill="both", expand="yes")
 
         frame_1_bottom=tk.LabelFrame(main_frame,text="PROVSION")
-        frame_1_bottom.pack(side=BOTTOM,fill="both", expand="yes")
+        frame_1_bottom.pack(fill="both", expand="yes")
+
+        frame_1_status=tk.Frame(main_frame)
+        frame_1_status.pack(side=BOTTOM,fill="both", expand="yes")
 
         #frame_1_top stuff
         frame_2_col1=tk.Frame(frame_1_top,padx=10, pady=10)
@@ -106,10 +109,46 @@ class View(ttk.Frame):
         self.provision_result_label = tk.Label(labelframe,relief="ridge",font=('bold', 20),anchor=CENTER)
         self.provision_result_label.pack(ipadx=40,ipady=40)
 
+        #frame_1_status stuff
+        frame_2_col1=tk.Frame(frame_1_status,padx=10, pady=10)
+        frame_2_col1.pack(side=LEFT)
+        frame_2_col2=tk.Frame(frame_1_status,padx=50, pady=10)
+        frame_2_col2.pack(side=LEFT)
+        frame_2_col3=tk.Frame(frame_1_status,padx=10, pady=10)
+        frame_2_col3.pack(side=RIGHT)
+
+        btn_device_port_refresh=tk.Button(frame_2_col1, text="Refresh",command=self.btn_device_port_refresh_handler)
+        btn_device_port_refresh.pack(side=LEFT)
+        label=tk.Label(frame_2_col1,text="device port:")
+        label.pack(side=LEFT)
+        self.device_port='' 
+        self.device_port_comobo_var= tk.StringVar()
+        self.device_port_comobo=ttk.Combobox(frame_2_col1, textvariable=self.device_port_comobo_var)
+        self.device_port_comobo['state']='readonly'
+        self.device_port_comobo.pack(fill='x', padx=5, pady=5)
+        self.device_port_comobo.bind('<<ComboboxSelected>>', self.debug_port_sel)
+
+
+        label=tk.Label(frame_2_col2,text="uart test port:")
+        label.pack(side=LEFT)
+        self.selected_uart_test_port = tk.StringVar()
+        self.uart_test_port_comobo=ttk.Combobox(frame_2_col2, textvariable=self.selected_uart_test_port)
+        self.uart_test_port_comobo['values']=['/dev/ttyUSBx','/dev/ttyUSBxx']
+        self.uart_test_port_comobo['state']='readonly'
+        self.uart_test_port_comobo.pack(fill='x', padx=5, pady=5)
+        self.uart_test_port_comobo.bind('<<ComboboxSelected>>', self.uart_test_port_sel)
+
+
     def set_controller(self, controller):
         self.controller = controller
 
     def btn_start_handler(self):
+    
+        if not self.device_port:
+            msg = 'Please select the device port first'
+            showwarning(title='device port selection!', message=msg)
+            return      
+
         if not self.is_auto_scan.get():
             if not self.eui_entry.get().startswith("98") or len(self.eui_entry.get())!=16:
                 msg="please type valid eui, 16 digitals"
@@ -151,12 +190,26 @@ class View(ttk.Frame):
         pass
         #... self.update_labels_in_lableframe(self.aws_frame_vars,value_list)
 
+
+    def btn_device_port_refresh_handler(self):
+        self.device_port_comobo['values']=['/dev/ttyUSB0','/dev/ttyUSB1','/dev/ttyUSBx','/dev/ttyUSBxx']
+
     def sel(self):
         if self.is_auto_scan.get():
             print("Scanner Mode") 
         else:    
             print("Mannual Mode") 
+
+    def debug_port_sel(self,event):
+        msg = f'You selected {self.device_port_comobo.get()}!'
+        self.device_port_comobo_var=self.device_port_comobo.get()
+        self.device_port=self.device_port_comobo.get()
+        showinfo(title='Result', message=msg)        
     
+    def uart_test_port_sel(self,event):
+        msg = f'You selected {self.uart_test_port_comobo.get()}!'
+        showinfo(title='Result', message=msg)
+
     def generate_labels_with_lableframe(self,master_frame,framename, key_list, vars_list):
         row_index=list(range(0,len(key_list)))
         labelframe = tk.LabelFrame(master_frame, text=framename)
